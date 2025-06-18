@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Card, Form, InputGroup, Badge } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
-import { Plus, Edit, Eye, Trash2, Search, CheckCircle, XCircle } from 'lucide-react';
+import { Plus, Edit, Eye, Trash2, Search, CheckCircle, XCircle, RotateCcw } from 'lucide-react';
 import { disciplinaService } from '../../services/disciplinaService';
 import { Disciplina } from '../../types';
 import Loading from '../common/Loading';
 import ConfirmationModal from '../common/ConfirmationModal';
+import InactiveModal from '../common/InactiveModal';
 
 const DisciplinaList: React.FC = () => {
   const [disciplinas, setDisciplinas] = useState<Disciplina[]>([]);
@@ -14,12 +15,13 @@ const DisciplinaList: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [showModal, setShowModal] = useState<boolean>(false);
+  const [showInactiveModal, setShowInactiveModal] = useState<boolean>(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
   const fetchDisciplinas = async () => {
     try {
       setLoading(true);
-      const data = await disciplinaService.getAll();
+      const data = await disciplinaService.getAtivos();
       setDisciplinas(data);
       setFilteredDisciplinas(data);
     } catch (err: any) {
@@ -56,6 +58,24 @@ const DisciplinaList: React.FC = () => {
     }
   };
 
+  const handleReactivate = async (id: number) => {
+    try {
+      const disciplina = await disciplinaService.getById(id);
+      await disciplinaService.update(id, { ...disciplina, ativo: true });
+      fetchDisciplinas();
+    } catch (err: any) {
+      setError(err.message || 'Erro ao reativar disciplina');
+    }
+  };
+
+  const renderInactiveRow = (disciplina: Disciplina) => (
+    <>
+      <td>{disciplina.id}</td>
+      <td>{disciplina.nome}</td>
+      <td>{disciplina.carga_horaria}h</td>
+    </>
+  );
+
   if (loading) {
     return <Loading message="Carregando disciplinas..." />;
   }
@@ -65,12 +85,23 @@ const DisciplinaList: React.FC = () => {
       <Card>
         <Card.Header className="bg-primary text-white d-flex justify-content-between align-items-center">
           <h5 className="mb-0">Disciplinas</h5>
-          <Link to="/disciplinas/novo">
-            <Button variant="light" size="sm" className="d-flex align-items-center gap-1">
-              <Plus size={18} />
-              Nova Disciplina
+          <div className="d-flex gap-2">
+            <Button 
+              variant="outline-light" 
+              size="sm" 
+              className="d-flex align-items-center gap-1"
+              onClick={() => setShowInactiveModal(true)}
+            >
+              <RotateCcw size={18} />
+              Reativar
             </Button>
-          </Link>
+            <Link to="/disciplinas/novo">
+              <Button variant="light" size="sm" className="d-flex align-items-center gap-1">
+                <Plus size={18} />
+                Nova Disciplina
+              </Button>
+            </Link>
+          </div>
         </Card.Header>
         <Card.Body>
           {error && <div className="alert alert-danger">{error}</div>}
@@ -109,15 +140,9 @@ const DisciplinaList: React.FC = () => {
                       <td>{disciplina.nome}</td>
                       <td>{disciplina.carga_horaria}h</td>
                       <td>
-                        {disciplina.ativo ? (
-                          <Badge bg="success" className="d-flex align-items-center gap-1" style={{ width: 'fit-content' }}>
-                            <CheckCircle size={14} /> Ativo
-                          </Badge>
-                        ) : (
-                          <Badge bg="danger" className="d-flex align-items-center gap-1" style={{ width: 'fit-content' }}>
-                            <XCircle size={14} /> Inativo
-                          </Badge>
-                        )}
+                        <Badge bg="success" className="d-flex align-items-center gap-1" style={{ width: 'fit-content' }}>
+                          <CheckCircle size={14} /> Ativo
+                        </Badge>
                       </td>
                       <td>
                         <div className="d-flex gap-1">
@@ -161,6 +186,16 @@ const DisciplinaList: React.FC = () => {
         message="Tem certeza que deseja excluir esta disciplina?"
         confirmButtonLabel="Excluir"
         variant="danger"
+      />
+
+      <InactiveModal
+        show={showInactiveModal}
+        onHide={() => setShowInactiveModal(false)}
+        title="Reativar Disciplinas"
+        fetchInactive={disciplinaService.getInativos}
+        onReactivate={handleReactivate}
+        renderRow={renderInactiveRow}
+        columns={['#', 'Nome', 'Carga Horária']}
       />
     </>
   );

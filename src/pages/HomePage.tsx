@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, Row, Col, Button } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
-import { BookOpen, Users, Home, Layers } from 'lucide-react';
+import { BookOpen, Users, Home, Layers, UserCheck, UserPlus } from 'lucide-react';
 
 const HomePage: React.FC = () => {
   return (
@@ -9,12 +9,12 @@ const HomePage: React.FC = () => {
       <div className="text-center mb-5">
         <h1 className="display-4 mb-4">Sistema de Gerenciamento Acadêmico</h1>
         <p className="lead">
-          Gerencie disciplinas, professores, salas e turmas de forma eficiente.
+          Gerencie disciplinas, professores, salas, turmas e alunos de forma eficiente.
         </p>
       </div>
 
       <Row className="g-4">
-        <Col md={6} lg={3}>
+        <Col md={6} lg={4}>
           <Card className="h-100 shadow-sm border-0 text-center hover-lift">
             <Card.Body className="d-flex flex-column">
               <div className="text-center mb-4">
@@ -35,7 +35,7 @@ const HomePage: React.FC = () => {
           </Card>
         </Col>
 
-        <Col md={6} lg={3}>
+        <Col md={6} lg={4}>
           <Card className="h-100 shadow-sm border-0 text-center hover-lift">
             <Card.Body className="d-flex flex-column">
               <div className="text-center mb-4">
@@ -56,7 +56,7 @@ const HomePage: React.FC = () => {
           </Card>
         </Col>
 
-        <Col md={6} lg={3}>
+        <Col md={6} lg={4}>
           <Card className="h-100 shadow-sm border-0 text-center hover-lift">
             <Card.Body className="d-flex flex-column">
               <div className="text-center mb-4">
@@ -77,7 +77,7 @@ const HomePage: React.FC = () => {
           </Card>
         </Col>
 
-        <Col md={6} lg={3}>
+        <Col md={6} lg={4}>
           <Card className="h-100 shadow-sm border-0 text-center hover-lift">
             <Card.Body className="d-flex flex-column">
               <div className="text-center mb-4">
@@ -92,6 +92,48 @@ const HomePage: React.FC = () => {
               <Link to="/turmas" className="mt-3">
                 <Button variant="outline-success" className="w-100">
                   Gerenciar Turmas
+                </Button>
+              </Link>
+            </Card.Body>
+          </Card>
+        </Col>
+
+        <Col md={6} lg={4}>
+          <Card className="h-100 shadow-sm border-0 text-center hover-lift">
+            <Card.Body className="d-flex flex-column">
+              <div className="text-center mb-4">
+                <div className="rounded-circle bg-secondary bg-opacity-10 p-3 mx-auto" style={{ width: 'fit-content' }}>
+                  <UserCheck size={40} className="text-secondary" />
+                </div>
+              </div>
+              <Card.Title className="fs-4 mb-3">Alunos</Card.Title>
+              <Card.Text className="text-muted flex-grow-1">
+                Cadastre e gerencie os alunos da instituição.
+              </Card.Text>
+              <Link to="/alunos" className="mt-3">
+                <Button variant="outline-secondary" className="w-100">
+                  Gerenciar Alunos
+                </Button>
+              </Link>
+            </Card.Body>
+          </Card>
+        </Col>
+
+        <Col md={6} lg={4}>
+          <Card className="h-100 shadow-sm border-0 text-center hover-lift">
+            <Card.Body className="d-flex flex-column">
+              <div className="text-center mb-4">
+                <div className="rounded-circle bg-dark bg-opacity-10 p-3 mx-auto" style={{ width: 'fit-content' }}>
+                  <UserPlus size={40} className="text-dark" />
+                </div>
+              </div>
+              <Card.Title className="fs-4 mb-3">Turma-Alunos</Card.Title>
+              <Card.Text className="text-muted flex-grow-1">
+                Vincule alunos às turmas para organizar as matrículas.
+              </Card.Text>
+              <Link to="/turma-alunos" className="mt-3">
+                <Button variant="outline-dark" className="w-100">
+                  Gerenciar Vínculos
                 </Button>
               </Link>
             </Card.Body>

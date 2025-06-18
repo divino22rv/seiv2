@@ -10,6 +10,8 @@ import DisciplinaPage from './pages/DisciplinaPage';
 import ProfessorPage from './pages/ProfessorPage';
 import SalaPage from './pages/SalaPage';
 import TurmaPage from './pages/TurmaPage';
+import AlunoPage from './pages/AlunoPage';
+import TurmaAlunoPage from './pages/TurmaAlunoPage';
 
 function App() {
   return (
@@ -39,6 +41,16 @@ function App() {
             <Route path="/turmas/novo" element={<TurmaPage action="novo" />} />
             <Route path="/turmas/:id" element={<TurmaPage />} />
             <Route path="/turmas/editar/:id" element={<TurmaPage action="editar" />} />
+            
+            <Route path="/alunos" element={<AlunoPage />} />
+            <Route path="/alunos/novo" element={<AlunoPage action="novo" />} />
+            <Route path="/alunos/:id" element={<AlunoPage />} />
+            <Route path="/alunos/editar/:id" element={<AlunoPage action="editar" />} />
+            
+            <Route path="/turma-alunos" element={<TurmaAlunoPage />} />
+            <Route path="/turma-alunos/novo" element={<TurmaAlunoPage action="novo" />} />
+            <Route path="/turma-alunos/:id" element={<TurmaAlunoPage />} />
+            <Route path="/turma-alunos/editar/:id" element={<TurmaAlunoPage action="editar" />} />
             
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

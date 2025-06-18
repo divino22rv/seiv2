@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Card, Form, InputGroup, Badge } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
-import { Plus, Edit, Eye, Trash2, Search, CheckCircle, XCircle } from 'lucide-react';
+import { Plus, Edit, Eye, Trash2, Search, CheckCircle, XCircle, RotateCcw } from 'lucide-react';
 import { salaService } from '../../services/salaService';
 import { Sala } from '../../types';
 import Loading from '../common/Loading';
 import ConfirmationModal from '../common/ConfirmationModal';
+import InactiveModal from '../common/InactiveModal';
 
 const SalaList: React.FC = () => {
   const [salas, setSalas] = useState<Sala[]>([]);
@@ -14,12 +15,13 @@ const SalaList: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [showModal, setShowModal] = useState<boolean>(false);
+  const [showInactiveModal, setShowInactiveModal] = useState<boolean>(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
   const fetchSalas = async () => {
     try {
       setLoading(true);
-      const data = await salaService.getAll();
+      const data = await salaService.getAtivos();
       setSalas(data);
       setFilteredSalas(data);
     } catch (err: any) {
@@ -57,6 +59,24 @@ const SalaList: React.FC = () => {
     }
   };
 
+  const handleReactivate = async (id: number) => {
+    try {
+      const sala = await salaService.getById(id);
+      await salaService.update(id, { ...sala, ativo: true });
+      fetchSalas();
+    } catch (err: any) {
+      setError(err.message || 'Erro ao reativar sala');
+    }
+  };
+
+  const renderInactiveRow = (sala: Sala) => (
+    <>
+      <td>{sala.id}</td>
+      <td>{sala.numero}</td>
+      <td>{sala.capacidade} lugares</td>
+    </>
+  );
+
   if (loading) {
     return <Loading message="Carregando salas..." />;
   }
@@ -66,12 +86,23 @@ const SalaList: React.FC = () => {
       <Card>
         <Card.Header className="bg-primary text-white d-flex justify-content-between align-items-center">
           <h5 className="mb-0">Salas</h5>
-          <Link to="/salas/novo">
-            <Button variant="light" size="sm" className="d-flex align-items-center gap-1">
-              <Plus size={18} />
-              Nova Sala
+          <div className="d-flex gap-2">
+            <Button 
+              variant="outline-light" 
+              size="sm" 
+              className="d-flex align-items-center gap-1"
+              onClick={() => setShowInactiveModal(true)}
+            >
+              <RotateCcw size={18} />
+              Reativar
             </Button>
-          </Link>
+            <Link to="/salas/novo">
+              <Button variant="light" size="sm" className="d-flex align-items-center gap-1">
+                <Plus size={18} />
+                Nova Sala
+              </Button>
+            </Link>
+          </div>
         </Card.Header>
         <Card.Body>
           {error && <div className="alert alert-danger">{error}</div>}
@@ -110,15 +141,9 @@ const SalaList: React.FC = () => {
                       <td>{sala.numero}</td>
                       <td>{sala.capacidade} lugares</td>
                       <td>
-                        {sala.ativo ? (
-                          <Badge bg="success" className="d-flex align-items-center gap-1" style={{ width: 'fit-content' }}>
-                            <CheckCircle size={14} /> Ativo
-                          </Badge>
-                        ) : (
-                          <Badge bg="danger" className="d-flex align-items-center gap-1" style={{ width: 'fit-content' }}>
-                            <XCircle size={14} /> Inativo
-                          </Badge>
-                        )}
+                        <Badge bg="success" className="d-flex align-items-center gap-1" style={{ width: 'fit-content' }}>
+                          <CheckCircle size={14} /> Ativo
+                        </Badge>
                       </td>
                       <td>
                         <div className="d-flex gap-1">
@@ -162,6 +187,16 @@ const SalaList: React.FC = () => {
         message="Tem certeza que deseja excluir esta sala?"
         confirmButtonLabel="Excluir"
         variant="danger"
+      />
+
+      <InactiveModal
+        show={showInactiveModal}
+        onHide={() => setShowInactiveModal(false)}
+        title="Reativar Salas"
+        fetchInactive={salaService.getInativos}
+        onReactivate={handleReactivate}
+        renderRow={renderInactiveRow}
+        columns={['#', 'Número', 'Capacidade']}
       />
     </>
   );

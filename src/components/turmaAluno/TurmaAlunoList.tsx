@@ -2,15 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Table, Button, Card, Form, InputGroup, Badge } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { Plus, Edit, Eye, Trash2, Search, CheckCircle, XCircle, RotateCcw } from 'lucide-react';
-import { professorService } from '../../services/professorService';
-import { Professor } from '../../types';
+import { turmaAlunoService } from '../../services/turmaAlunoService';
+import { TurmaAluno } from '../../types';
 import Loading from '../common/Loading';
 import ConfirmationModal from '../common/ConfirmationModal';
 import InactiveModal from '../common/InactiveModal';
 
-const ProfessorList: React.FC = () => {
-  const [professores, setProfessores] = useState<Professor[]>([]);
-  const [filteredProfessores, setFilteredProfessores] = useState<Professor[]>([]);
+const TurmaAlunoList: React.FC = () => {
+  const [turmaAlunos, setTurmaAlunos] = useState<TurmaAluno[]>([]);
+  const [filteredTurmaAlunos, setFilteredTurmaAlunos] = useState<TurmaAluno[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -18,75 +18,75 @@ const ProfessorList: React.FC = () => {
   const [showInactiveModal, setShowInactiveModal] = useState<boolean>(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
-  const fetchProfessores = async () => {
+  const fetchTurmaAlunos = async () => {
     try {
       setLoading(true);
-      const data = await professorService.getAtivos();
-      setProfessores(data);
-      setFilteredProfessores(data);
+      const data = await turmaAlunoService.getAtivos();
+      setTurmaAlunos(data);
+      setFilteredTurmaAlunos(data);
     } catch (err: any) {
-      setError(err.message || 'Erro ao carregar professores');
+      setError(err.message || 'Erro ao carregar vínculos turma-aluno');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchProfessores();
+    fetchTurmaAlunos();
   }, []);
 
   useEffect(() => {
     if (searchTerm) {
-      const filtered = professores.filter(
-        professor =>
-          professor.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          professor.matricula.toLowerCase().includes(searchTerm.toLowerCase())
+      const filtered = turmaAlunos.filter(
+        turmaAluno =>
+          turmaAluno.turma.toString().includes(searchTerm) ||
+          turmaAluno.aluno.toString().includes(searchTerm)
       );
-      setFilteredProfessores(filtered);
+      setFilteredTurmaAlunos(filtered);
     } else {
-      setFilteredProfessores(professores);
+      setFilteredTurmaAlunos(turmaAlunos);
     }
-  }, [searchTerm, professores]);
+  }, [searchTerm, turmaAlunos]);
 
   const handleDelete = async () => {
     if (selectedId) {
       try {
-        await professorService.delete(selectedId);
+        await turmaAlunoService.delete(selectedId);
         setShowModal(false);
-        fetchProfessores();
+        fetchTurmaAlunos();
       } catch (err: any) {
-        setError(err.message || 'Erro ao excluir professor');
+        setError(err.message || 'Erro ao excluir vínculo');
       }
     }
   };
 
   const handleReactivate = async (id: number) => {
     try {
-      const professor = await professorService.getById(id);
-      await professorService.update(id, { ...professor, ativo: true });
-      fetchProfessores();
+      const turmaAluno = await turmaAlunoService.getById(id);
+      await turmaAlunoService.update(id, { ...turmaAluno, ativo: true });
+      fetchTurmaAlunos();
     } catch (err: any) {
-      setError(err.message || 'Erro ao reativar professor');
+      setError(err.message || 'Erro ao reativar vínculo');
     }
   };
 
-  const renderInactiveRow = (professor: Professor) => (
+  const renderInactiveRow = (turmaAluno: TurmaAluno) => (
     <>
-      <td>{professor.id}</td>
-      <td>{professor.nome}</td>
-      <td>{professor.matricula}</td>
+      <td>{turmaAluno.id}</td>
+      <td>{turmaAluno.turma}</td>
+      <td>{turmaAluno.aluno}</td>
     </>
   );
 
   if (loading) {
-    return <Loading message="Carregando professores..." />;
+    return <Loading message="Carregando vínculos turma-aluno..." />;
   }
 
   return (
     <>
       <Card>
         <Card.Header className="bg-primary text-white d-flex justify-content-between align-items-center">
-          <h5 className="mb-0">Professores</h5>
+          <h5 className="mb-0">Turma - Alunos</h5>
           <div className="d-flex gap-2">
             <Button 
               variant="outline-light" 
@@ -97,10 +97,10 @@ const ProfessorList: React.FC = () => {
               <RotateCcw size={18} />
               Reativar
             </Button>
-            <Link to="/professores/novo">
+            <Link to="/turma-alunos/novo">
               <Button variant="light" size="sm" className="d-flex align-items-center gap-1">
                 <Plus size={18} />
-                Novo Professor
+                Novo Vínculo
               </Button>
             </Link>
           </div>
@@ -113,15 +113,15 @@ const ProfessorList: React.FC = () => {
               <Search size={18} />
             </InputGroup.Text>
             <Form.Control
-              placeholder="Buscar professor por nome ou matrícula..."
+              placeholder="Buscar por ID da turma ou aluno..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </InputGroup>
 
-          {filteredProfessores.length === 0 ? (
+          {filteredTurmaAlunos.length === 0 ? (
             <div className="text-center p-4">
-              <p className="text-muted">Nenhum professor encontrado.</p>
+              <p className="text-muted">Nenhum vínculo encontrado.</p>
             </div>
           ) : (
             <div className="table-responsive">
@@ -129,18 +129,18 @@ const ProfessorList: React.FC = () => {
                 <thead>
                   <tr>
                     <th>#</th>
-                    <th>Nome</th>
-                    <th>Matrícula</th>
+                    <th>ID Turma</th>
+                    <th>ID Aluno</th>
                     <th>Status</th>
                     <th>Ações</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredProfessores.map((professor) => (
-                    <tr key={professor.id}>
-                      <td>{professor.id}</td>
-                      <td>{professor.nome}</td>
-                      <td>{professor.matricula}</td>
+                  {filteredTurmaAlunos.map((turmaAluno) => (
+                    <tr key={turmaAluno.id}>
+                      <td>{turmaAluno.id}</td>
+                      <td>{turmaAluno.turma}</td>
+                      <td>{turmaAluno.aluno}</td>
                       <td>
                         <Badge bg="success" className="d-flex align-items-center gap-1" style={{ width: 'fit-content' }}>
                           <CheckCircle size={14} /> Ativo
@@ -148,12 +148,12 @@ const ProfessorList: React.FC = () => {
                       </td>
                       <td>
                         <div className="d-flex gap-1">
-                          <Link to={`/professores/${professor.id}`}>
+                          <Link to={`/turma-alunos/${turmaAluno.id}`}>
                             <Button variant="info" size="sm" className="d-flex align-items-center">
                               <Eye size={16} />
                             </Button>
                           </Link>
-                          <Link to={`/professores/editar/${professor.id}`}>
+                          <Link to={`/turma-alunos/editar/${turmaAluno.id}`}>
                             <Button variant="warning" size="sm" className="d-flex align-items-center">
                               <Edit size={16} />
                             </Button>
@@ -163,7 +163,7 @@ const ProfessorList: React.FC = () => {
                             size="sm"
                             className="d-flex align-items-center"
                             onClick={() => {
-                              setSelectedId(professor.id!);
+                              setSelectedId(turmaAluno.id!);
                               setShowModal(true);
                             }}
                           >
@@ -185,7 +185,7 @@ const ProfessorList: React.FC = () => {
         onHide={() => setShowModal(false)}
         onConfirm={handleDelete}
         title="Confirmar Exclusão"
-        message="Tem certeza que deseja excluir este professor?"
+        message="Tem certeza que deseja excluir este vínculo?"
         confirmButtonLabel="Excluir"
         variant="danger"
       />
@@ -193,14 +193,14 @@ const ProfessorList: React.FC = () => {
       <InactiveModal
         show={showInactiveModal}
         onHide={() => setShowInactiveModal(false)}
-        title="Reativar Professores"
-        fetchInactive={professorService.getInativos}
+        title="Reativar Vínculos Turma-Aluno"
+        fetchInactive={turmaAlunoService.getInativos}
         onReactivate={handleReactivate}
         renderRow={renderInactiveRow}
-        columns={['#', 'Nome', 'Matrícula']}
+        columns={['#', 'ID Turma', 'ID Aluno']}
       />
     </>
   );
 };
 
-export default ProfessorList;
+export default TurmaAlunoList;

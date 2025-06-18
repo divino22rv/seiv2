@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navbar, Nav, Container } from 'react-bootstrap';
 import { Link, useLocation } from 'react-router-dom';
-import { BookOpen, Users, Home, LayoutGrid, Layers } from 'lucide-react';
+import { BookOpen, Users, Home, LayoutGrid, Layers, UserCheck, UserPlus } from 'lucide-react';
 
 const AppNavbar: React.FC = () => {
   const location = useLocation();
@@ -60,6 +60,24 @@ const AppNavbar: React.FC = () => {
             >
               <Layers size={18} className="me-1" />
               Turmas
+            </Nav.Link>
+            <Nav.Link 
+              as={Link} 
+              to="/alunos" 
+              active={location.pathname.includes('/alunos')}
+              className="d-flex align-items-center"
+            >
+              <UserCheck size={18} className="me-1" />
+              Alunos
+            </Nav.Link>
+            <Nav.Link 
+              as={Link} 
+              to="/turma-alunos" 
+              active={location.pathname.includes('/turma-alunos')}
+              className="d-flex align-items-center"
+            >
+              <UserPlus size={18} className="me-1" />
+              Turma-Alunos
             </Nav.Link>
           </Nav>
         </Navbar.Collapse>

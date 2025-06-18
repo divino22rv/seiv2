@@ -2,15 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Table, Button, Card, Form, InputGroup, Badge } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { Plus, Edit, Eye, Trash2, Search, CheckCircle, XCircle, RotateCcw } from 'lucide-react';
-import { professorService } from '../../services/professorService';
-import { Professor } from '../../types';
+import { alunoService } from '../../services/alunoService';
+import { Aluno } from '../../types';
 import Loading from '../common/Loading';
 import ConfirmationModal from '../common/ConfirmationModal';
 import InactiveModal from '../common/InactiveModal';
 
-const ProfessorList: React.FC = () => {
-  const [professores, setProfessores] = useState<Professor[]>([]);
-  const [filteredProfessores, setFilteredProfessores] = useState<Professor[]>([]);
+const AlunoList: React.FC = () => {
+  const [alunos, setAlunos] = useState<Aluno[]>([]);
+  const [filteredAlunos, setFilteredAlunos] = useState<Aluno[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -18,75 +18,78 @@ const ProfessorList: React.FC = () => {
   const [showInactiveModal, setShowInactiveModal] = useState<boolean>(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
-  const fetchProfessores = async () => {
+  const fetchAlunos = async () => {
     try {
       setLoading(true);
-      const data = await professorService.getAtivos();
-      setProfessores(data);
-      setFilteredProfessores(data);
+      const data = await alunoService.getAtivos();
+      setAlunos(data);
+      setFilteredAlunos(data);
     } catch (err: any) {
-      setError(err.message || 'Erro ao carregar professores');
+      setError(err.message || 'Erro ao carregar alunos');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchProfessores();
+    fetchAlunos();
   }, []);
 
   useEffect(() => {
     if (searchTerm) {
-      const filtered = professores.filter(
-        professor =>
-          professor.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          professor.matricula.toLowerCase().includes(searchTerm.toLowerCase())
+      const filtered = alunos.filter(
+        aluno =>
+          aluno.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          aluno.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          aluno.matricula.toLowerCase().includes(searchTerm.toLowerCase())
       );
-      setFilteredProfessores(filtered);
+      setFilteredAlunos(filtered);
     } else {
-      setFilteredProfessores(professores);
+      setFilteredAlunos(alunos);
     }
-  }, [searchTerm, professores]);
+  }, [searchTerm, alunos]);
 
   const handleDelete = async () => {
     if (selectedId) {
       try {
-        await professorService.delete(selectedId);
+        await alunoService.delete(selectedId);
         setShowModal(false);
-        fetchProfessores();
+        fetchAlunos();
       } catch (err: any) {
-        setError(err.message || 'Erro ao excluir professor');
+        setError(err.message || 'Erro ao excluir aluno');
       }
     }
   };
 
   const handleReactivate = async (id: number) => {
     try {
-      const professor = await professorService.getById(id);
-      await professorService.update(id, { ...professor, ativo: true });
-      fetchProfessores();
+      const aluno = await alunoService.getById(id);
+      await alunoService.update(id, { ...aluno, ativo: true });
+      fetchAlunos();
     } catch (err: any) {
-      setError(err.message || 'Erro ao reativar professor');
+      setError(err.message || 'Erro ao reativar aluno');
     }
   };
 
-  const renderInactiveRow = (professor: Professor) => (
+  const renderInactiveRow = (aluno: Aluno) => (
     <>
-      <td>{professor.id}</td>
-      <td>{professor.nome}</td>
-      <td>{professor.matricula}</td>
+      <td>{aluno.id}</td>
+      <td>{aluno.nome}</td>
+      <td>{aluno.email}</td>
+      <td>{aluno.matricula}</td>
+      <td>{new Date(aluno.dataNascimento).toLocaleDateString('pt-BR')}</td>
     </>
   );
 
   if (loading) {
-    return <Loading message="Carregando professores..." />;
+    return <Loading message="Carregando alunos..." />;
   }
 
   return (
     <>
       <Card>
         <Card.Header className="bg-primary text-white d-flex justify-content-between align-items-center">
-          <h5 className="mb-0">Professores</h5>
+          <h5 className="mb-0">Alunos</h5>
           <div className="d-flex gap-2">
             <Button 
               variant="outline-light" 
@@ -97,10 +100,10 @@ const ProfessorList: React.FC = () => {
               <RotateCcw size={18} />
               Reativar
             </Button>
-            <Link to="/professores/novo">
+            <Link to="/alunos/novo">
               <Button variant="light" size="sm" className="d-flex align-items-center gap-1">
                 <Plus size={18} />
-                Novo Professor
+                Novo Aluno
               </Button>
             </Link>
           </div>
@@ -113,15 +116,15 @@ const ProfessorList: React.FC = () => {
               <Search size={18} />
             </InputGroup.Text>
             <Form.Control
-              placeholder="Buscar professor por nome ou matrícula..."
+              placeholder="Buscar aluno por nome, email ou matrícula..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </InputGroup>
 
-          {filteredProfessores.length === 0 ? (
+          {filteredAlunos.length === 0 ? (
             <div className="text-center p-4">
-              <p className="text-muted">Nenhum professor encontrado.</p>
+              <p className="text-muted">Nenhum aluno encontrado.</p>
             </div>
           ) : (
             <div className="table-responsive">
@@ -130,17 +133,21 @@ const ProfessorList: React.FC = () => {
                   <tr>
                     <th>#</th>
                     <th>Nome</th>
+                    <th>Email</th>
                     <th>Matrícula</th>
+                    <th>Data Nascimento</th>
                     <th>Status</th>
                     <th>Ações</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredProfessores.map((professor) => (
-                    <tr key={professor.id}>
-                      <td>{professor.id}</td>
-                      <td>{professor.nome}</td>
-                      <td>{professor.matricula}</td>
+                  {filteredAlunos.map((aluno) => (
+                    <tr key={aluno.id}>
+                      <td>{aluno.id}</td>
+                      <td>{aluno.nome}</td>
+                      <td>{aluno.email}</td>
+                      <td>{aluno.matricula}</td>
+                      <td>{new Date(aluno.dataNascimento).toLocaleDateString('pt-BR')}</td>
                       <td>
                         <Badge bg="success" className="d-flex align-items-center gap-1" style={{ width: 'fit-content' }}>
                           <CheckCircle size={14} /> Ativo
@@ -148,12 +155,12 @@ const ProfessorList: React.FC = () => {
                       </td>
                       <td>
                         <div className="d-flex gap-1">
-                          <Link to={`/professores/${professor.id}`}>
+                          <Link to={`/alunos/${aluno.id}`}>
                             <Button variant="info" size="sm" className="d-flex align-items-center">
                               <Eye size={16} />
                             </Button>
                           </Link>
-                          <Link to={`/professores/editar/${professor.id}`}>
+                          <Link to={`/alunos/editar/${aluno.id}`}>
                             <Button variant="warning" size="sm" className="d-flex align-items-center">
                               <Edit size={16} />
                             </Button>
@@ -163,7 +170,7 @@ const ProfessorList: React.FC = () => {
                             size="sm"
                             className="d-flex align-items-center"
                             onClick={() => {
-                              setSelectedId(professor.id!);
+                              setSelectedId(aluno.id!);
                               setShowModal(true);
                             }}
                           >
@@ -185,7 +192,7 @@ const ProfessorList: React.FC = () => {
         onHide={() => setShowModal(false)}
         onConfirm={handleDelete}
         title="Confirmar Exclusão"
-        message="Tem certeza que deseja excluir este professor?"
+        message="Tem certeza que deseja excluir este aluno?"
         confirmButtonLabel="Excluir"
         variant="danger"
       />
@@ -193,14 +200,14 @@ const ProfessorList: React.FC = () => {
       <InactiveModal
         show={showInactiveModal}
         onHide={() => setShowInactiveModal(false)}
-        title="Reativar Professores"
-        fetchInactive={professorService.getInativos}
+        title="Reativar Alunos"
+        fetchInactive={alunoService.getInativos}
         onReactivate={handleReactivate}
         renderRow={renderInactiveRow}
-        columns={['#', 'Nome', 'Matrícula']}
+        columns={['#', 'Nome', 'Email', 'Matrícula', 'Data Nascimento']}
       />
     </>
   );
 };
 
-export default ProfessorList;
+export default AlunoList;

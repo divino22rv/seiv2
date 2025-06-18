@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Card, Form, InputGroup, Badge } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
-import { Plus, Edit, Eye, Trash2, Search, CheckCircle, XCircle } from 'lucide-react';
+import { Plus, Edit, Eye, Trash2, Search, CheckCircle, XCircle, RotateCcw } from 'lucide-react';
 import { turmaService } from '../../services/turmaService';
 import { Turma } from '../../types';
 import Loading from '../common/Loading';
 import ConfirmationModal from '../common/ConfirmationModal';
+import InactiveModal from '../common/InactiveModal';
 
 const TurmaList: React.FC = () => {
   const [turmas, setTurmas] = useState<Turma[]>([]);
@@ -14,12 +15,14 @@ const TurmaList: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [showModal, setShowModal] = useState<boolean>(false);
+  const [showInactiveModal, setShowInactiveModal] = useState<boolean>(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
   const fetchTurmas = async () => {
     try {
       setLoading(true);
-      const data = await turmaService.getAllWithRelations();
+      // Use getAtivos instead of getAllWithRelations for active only
+      const data = await turmaService.getAtivos();
       setTurmas(data);
       setFilteredTurmas(data);
     } catch (err: any) {
@@ -59,6 +62,27 @@ const TurmaList: React.FC = () => {
     }
   };
 
+  const handleReactivate = async (id: number) => {
+    try {
+      const turma = await turmaService.getById(id);
+      await turmaService.update(id, { ...turma, ativo: true });
+      fetchTurmas();
+    } catch (err: any) {
+      setError(err.message || 'Erro ao reativar turma');
+    }
+  };
+
+  const renderInactiveRow = (turma: Turma) => (
+    <>
+      <td>{turma.id}</td>
+      <td>{turma.codigoTurma}</td>
+      <td>{turma.disciplina?.nome || 'N/A'}</td>
+      <td>{turma.professor?.nome || 'N/A'}</td>
+      <td>{turma.sala ? `Sala ${turma.sala.numero}` : 'N/A'}</td>
+      <td>{turma.horario}h</td>
+    </>
+  );
+
   if (loading) {
     return <Loading message="Carregando turmas..." />;
   }
@@ -68,12 +92,23 @@ const TurmaList: React.FC = () => {
       <Card>
         <Card.Header className="bg-primary text-white d-flex justify-content-between align-items-center">
           <h5 className="mb-0">Turmas</h5>
-          <Link to="/turmas/novo">
-            <Button variant="light" size="sm" className="d-flex align-items-center gap-1">
-              <Plus size={18} />
-              Nova Turma
+          <div className="d-flex gap-2">
+            <Button 
+              variant="outline-light" 
+              size="sm" 
+              className="d-flex align-items-center gap-1"
+              onClick={() => setShowInactiveModal(true)}
+            >
+              <RotateCcw size={18} />
+              Reativar
             </Button>
-          </Link>
+            <Link to="/turmas/novo">
+              <Button variant="light" size="sm" className="d-flex align-items-center gap-1">
+                <Plus size={18} />
+                Nova Turma
+              </Button>
+            </Link>
+          </div>
         </Card.Header>
         <Card.Body>
           {error && <div className="alert alert-danger">{error}</div>}
@@ -118,15 +153,9 @@ const TurmaList: React.FC = () => {
                       <td>{turma.sala ? `Sala ${turma.sala.numero}` : 'N/A'}</td>
                       <td>{turma.horario}h</td>
                       <td>
-                        {turma.ativo ? (
-                          <Badge bg="success" className="d-flex align-items-center gap-1" style={{ width: 'fit-content' }}>
-                            <CheckCircle size={14} /> Ativo
-                          </Badge>
-                        ) : (
-                          <Badge bg="danger" className="d-flex align-items-center gap-1" style={{ width: 'fit-content' }}>
-                            <XCircle size={14} /> Inativo
-                          </Badge>
-                        )}
+                        <Badge bg="success" className="d-flex align-items-center gap-1" style={{ width: 'fit-content' }}>
+                          <CheckCircle size={14} /> Ativo
+                        </Badge>
                       </td>
                       <td>
                         <div className="d-flex gap-1">
@@ -170,6 +199,16 @@ const TurmaList: React.FC = () => {
         message="Tem certeza que deseja excluir esta turma?"
         confirmButtonLabel="Excluir"
         variant="danger"
+      />
+
+      <InactiveModal
+        show={showInactiveModal}
+        onHide={() => setShowInactiveModal(false)}
+        title="Reativar Turmas"
+        fetchInactive={turmaService.getInativos}
+        onReactivate={handleReactivate}
+        renderRow={renderInactiveRow}
+        columns={['#', 'Código', 'Disciplina', 'Professor', 'Sala', 'Horário']}
       />
     </>
   );
